@@ -103,6 +103,8 @@ def _print_section(title: str, content: str) -> None:
 
 
 def main() -> int:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("provider", choices=list(PROVIDER_DEFAULTS.keys()))
     parser.add_argument("--deep-model", default=None, help="Override deep_think_llm")
@@ -144,7 +146,7 @@ def main() -> int:
     # 4) SignalProcessor extracts the rating with zero LLM calls.
     sp = SignalProcessor()
     rating = sp.process_signal(final_decision)
-    _print_section("[4] SignalProcessor → rating", rating)
+    _print_section("[4] SignalProcessor -> rating", rating)
 
     # 5) Lightweight checks: each rendered output should carry the expected
     #    section headers so downstream consumers (memory log, CLI display,

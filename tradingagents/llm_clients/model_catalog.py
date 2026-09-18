@@ -208,9 +208,25 @@ MODEL_OPTIONS: ProviderModeOptions = {
 }
 
 
-def get_model_options(provider: str, mode: str) -> list[ModelOption]:
-    """Return shared model options for a provider and selection mode."""
-    return MODEL_OPTIONS[provider.lower()][mode]
+def get_model_options(provider: str, mode: str, include_quick: bool = False) -> list[ModelOption]:
+    """Return shared model options for a provider and selection mode.
+
+    When mode is 'deep' and include_quick is True, models from the 'quick'
+    tier that are not already present in 'deep' are appended (before 'custom'
+    if present), allowing users to pick quick-thinking models for deep thinking.
+    """
+    options = list(MODEL_OPTIONS[provider.lower()][mode])
+    if mode == "deep" and include_quick:
+        quick_options = MODEL_OPTIONS[provider.lower()].get("quick", [])
+        existing_values = {val for _, val in options if val != "custom"}
+        additional_quick = [
+            (disp, val) for disp, val in quick_options
+            if val != "custom" and val not in existing_values
+        ]
+        if options and options[-1][1] == "custom":
+            return options[:-1] + additional_quick + [options[-1]]
+        return options + additional_quick
+    return options
 
 
 def get_known_models() -> dict[str, list[str]]:

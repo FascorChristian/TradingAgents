@@ -689,7 +689,9 @@ def get_user_selections():
             )
         )
         selected_shallow_thinker = select_shallow_thinking_agent(selected_llm_provider)
-        selected_deep_thinker = select_deep_thinking_agent(selected_llm_provider)
+        selected_deep_thinker = select_deep_thinking_agent(
+            selected_llm_provider, quick_model=selected_shallow_thinker
+        )
 
     # Step 8: Provider-specific reasoning/thinking configuration. Each knob is
     # settable via its TRADINGAGENTS_* env var; when that var is set (or the

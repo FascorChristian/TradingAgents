@@ -1,3 +1,4 @@
+import os
 from typing import Any
 
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -37,9 +38,14 @@ class GoogleClient(BaseLLMClient):
                 llm_kwargs[key] = self.kwargs[key]
 
         # Unified api_key maps to provider-specific google_api_key
-        google_api_key = self.kwargs.get("api_key") or self.kwargs.get("google_api_key")
+        google_api_key = (
+            self.kwargs.get("api_key")
+            or self.kwargs.get("google_api_key")
+            or os.environ.get("GOOGLE_API_KEY")
+            or os.environ.get("GEMINI_API_KEY")
+        )
         if google_api_key:
-            llm_kwargs["google_api_key"] = google_api_key
+            llm_kwargs["google_api_key"] = str(google_api_key).strip().strip('"\'')
 
         # Gemini 3.x takes the string ``thinking_level`` (the integer
         # ``thinking_budget`` was for the now-retired 2.5 line). Pro accepts

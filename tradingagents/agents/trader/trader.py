@@ -30,7 +30,7 @@ def create_trader(llm):
         # grounded in real ATR / support-resistance / current price (#1167). The
         # report is empty when the user did not select the market analyst, so
         # only offer it (and the grounding instruction) when it has content.
-        market_report = (state["market_report"] or "").strip()
+        market_report = (state.get("market_report") or "").strip()
 
         if market_report:
             grounding = (

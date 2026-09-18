@@ -243,11 +243,12 @@ def _require_text(message: str, hint: str) -> str:
     return response.strip()
 
 
-def select_openrouter_model(mode: str) -> str:
+def select_openrouter_model(mode: str, quick_model: str | None = None) -> str:
     """Select an OpenRouter model from the newest available, or enter a custom ID.
 
     ``mode`` ("quick"/"deep") labels the prompt so the two consecutive
     OpenRouter selections are distinguishable, like the other providers (#1000).
+    When mode is 'deep', any previously selected quick-thinking model is also offered.
     """
     models = _fetch_openrouter_models()  # newest first
     # Prefer the newest from mainstream providers so the shortlist isn't crowded
@@ -260,6 +261,8 @@ def select_openrouter_model(mode: str) -> str:
     top = (mainstream or models)[:5]
 
     choices = [questionary.Choice(name, value=mid) for name, mid in top]
+    if mode == "deep" and quick_model and quick_model != "custom" and not any(c.value == quick_model for c in choices):
+        choices.insert(0, questionary.Choice(f"Quick-Thinking model ({quick_model})", value=quick_model))
     choices.append(questionary.Choice("Custom model ID", value="custom"))
 
     choice = questionary.select(
@@ -289,10 +292,10 @@ def _prompt_custom_model_id() -> str:
     return _require_text("Enter model ID:", "Please enter a model ID.")
 
 
-def _select_model(provider: str, mode: str) -> str:
+def _select_model(provider: str, mode: str, quick_model: str | None = None) -> str:
     """Select a model for the given provider and mode (quick/deep)."""
     if provider.lower() == "openrouter":
-        return select_openrouter_model(mode)
+        return select_openrouter_model(mode, quick_model=quick_model)
 
     if provider.lower() == "azure":
         return _require_text(
@@ -300,11 +303,22 @@ def _select_model(provider: str, mode: str) -> str:
             "Please enter a deployment name.",
         )
 
+    options = list(get_model_options(provider, mode, include_quick=(mode == "deep")))
+
+    if mode == "deep" and quick_model and quick_model != "custom":
+        existing_values = {val for _, val in options}
+        if quick_model not in existing_values:
+            quick_entry = (f"Quick-Thinking model ({quick_model})", quick_model)
+            if options and options[-1][1] == "custom":
+                options = options[:-1] + [quick_entry] + [options[-1]]
+            else:
+                options = options + [quick_entry]
+
     choice = questionary.select(
         f"Select Your [{mode.title()}-Thinking LLM Engine]:",
         choices=[
             questionary.Choice(display, value=value)
-            for display, value in get_model_options(provider, mode)
+            for display, value in options
         ],
         instruction="\n- Use arrow keys to navigate\n- Press Enter to select",
         style=questionary.Style(
@@ -331,9 +345,9 @@ def select_shallow_thinking_agent(provider) -> str:
     return _select_model(provider, "quick")
 
 
-def select_deep_thinking_agent(provider) -> str:
+def select_deep_thinking_agent(provider, quick_model: str | None = None) -> str:
     """Select deep thinking llm engine using an interactive selection."""
-    return _select_model(provider, "deep")
+    return _select_model(provider, "deep", quick_model=quick_model)
 
 def _llm_provider_table() -> list[tuple[str, str, str | None]]:
     """(display_name, provider_key, base_url) for every supported provider.
