@@ -1316,7 +1316,26 @@ def analyze(
         "--clear-checkpoints",
         help="Delete all saved checkpoints before running (force fresh start).",
     ),
+    cli_mode: bool = typer.Option(
+        False,
+        "--cli",
+        help="Run in terminal CLI mode instead of GUI window.",
+    ),
+    gui: bool | None = typer.Option(
+        None,
+        "--gui/--no-gui",
+        help="Launch desktop graphical user interface.",
+    ),
 ):
+    """Run TradingAgents multi-agent analysis (opens GUI window by default)."""
+    is_test_runner = bool(os.environ.get("PYTEST_CURRENT_TEST"))
+    should_launch_gui = False if (cli_mode or gui is False) else (gui is True or not is_test_runner)
+
+    if should_launch_gui:
+        from cli.gui import launch_gui
+        launch_gui(checkpoint=checkpoint, clear_checkpoints=clear_checkpoints)
+        return
+
     if clear_checkpoints:
         from tradingagents.graph.checkpointer import clear_all_checkpoints
         n = clear_all_checkpoints(DEFAULT_CONFIG["data_cache_dir"])
@@ -1337,4 +1356,8 @@ def analyze(
 
 
 if __name__ == "__main__":
-    app()
+    if "gui" in sys.argv:
+        from cli.gui import launch_gui
+        launch_gui()
+    else:
+        app()

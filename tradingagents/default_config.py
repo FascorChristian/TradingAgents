@@ -26,6 +26,10 @@ _ENV_OVERRIDES = {
     "TRADINGAGENTS_GOOGLE_THINKING_LEVEL":   "google_thinking_level",
     "TRADINGAGENTS_OPENAI_REASONING_EFFORT": "openai_reasoning_effort",
     "TRADINGAGENTS_ANTHROPIC_EFFORT":        "anthropic_effort",
+    # Automatic fallback on quota/service-unavailable errors
+    "TRADINGAGENTS_FALLBACK_MODELS_ENABLED":     "fallback_models_enabled",
+    "TRADINGAGENTS_DEEP_THINK_FALLBACK_MODELS":  "deep_think_fallback_models",
+    "TRADINGAGENTS_QUICK_THINK_FALLBACK_MODELS": "quick_think_fallback_models",
 }
 
 
@@ -88,6 +92,12 @@ DEFAULT_CONFIG = _apply_env_overrides({
     # provider-specific URL here would leak (e.g. OpenAI's /v1 was previously
     # being forwarded to Gemini, producing malformed request URLs).
     "backend_url": None,
+    # Automatic fallback on quota (429) or service unavailable (503) errors.
+    # When enabled, calls seamlessly fall back to the next available models in
+    # the provider catalog or the custom fallback lists below.
+    "fallback_models_enabled": True,
+    "deep_think_fallback_models": None,
+    "quick_think_fallback_models": None,
     # Provider-specific thinking configuration
     "google_thinking_level": None,      # "high", "minimal", etc.
     "openai_reasoning_effort": None,    # "medium", "high", "low"

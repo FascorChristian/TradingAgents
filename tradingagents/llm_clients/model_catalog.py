@@ -241,3 +241,23 @@ def get_known_models() -> dict[str, list[str]]:
         )
         for provider, mode_options in MODEL_OPTIONS.items()
     }
+
+
+def get_fallback_candidates(provider: str, current_model: str, mode: str) -> list[str]:
+    """Return ordered fallback candidate model identifiers for a provider and mode.
+
+    The returned list excludes the current model and any 'custom' placeholders.
+    For 'deep' mode, quick-thinking models are included as valid fallbacks.
+    """
+    p = provider.lower()
+    if p not in MODEL_OPTIONS:
+        return []
+    include_quick = (mode == "deep")
+    options = get_model_options(p, mode, include_quick=include_quick)
+    models = [val for _, val in options if val != "custom"]
+    if not models:
+        return []
+    if current_model in models:
+        idx = models.index(current_model)
+        return models[idx + 1:] + models[:idx]
+    return [m for m in models if m != current_model]

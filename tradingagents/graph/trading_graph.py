@@ -32,7 +32,7 @@ from tradingagents.agents.utils.memory import TradingMemoryLog
 from tradingagents.dataflows.config import set_config
 from tradingagents.dataflows.utils import safe_ticker_component
 from tradingagents.default_config import DEFAULT_CONFIG
-from tradingagents.llm_clients import create_llm_client
+from tradingagents.llm_clients import build_fallback_llm, create_llm_client
 from tradingagents.reporting import write_report_tree
 
 from .checkpointer import checkpoint_step, clear_checkpoint, get_checkpointer, thread_id
@@ -112,21 +112,22 @@ class TradingAgentsGraph:
         if self.callbacks:
             llm_kwargs["callbacks"] = self.callbacks
 
-        deep_client = create_llm_client(
+        self.deep_thinking_llm = build_fallback_llm(
             provider=self.config["llm_provider"],
-            model=self.config["deep_think_llm"],
+            primary_model=self.config["deep_think_llm"],
+            mode="deep",
+            config=self.config,
             base_url=self.config.get("backend_url"),
             **llm_kwargs,
         )
-        quick_client = create_llm_client(
+        self.quick_thinking_llm = build_fallback_llm(
             provider=self.config["llm_provider"],
-            model=self.config["quick_think_llm"],
+            primary_model=self.config["quick_think_llm"],
+            mode="quick",
+            config=self.config,
             base_url=self.config.get("backend_url"),
             **llm_kwargs,
         )
-
-        self.deep_thinking_llm = deep_client.get_llm()
-        self.quick_thinking_llm = quick_client.get_llm()
 
         self.memory_log = TradingMemoryLog(self.config)
 
